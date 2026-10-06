@@ -26,7 +26,7 @@ export function SiteHeader() {
     }
   };
   return (
-    <header className="sticky top-0 z-[1000] border-b bg-background/85 backdrop-blur">
+    <header className="sticky top-0 z-[1100] border-b bg-background/85 backdrop-blur">
       <div className="container flex h-14 items-center gap-2 sm:gap-4">
         <Link href="/" className="flex shrink-0 items-center gap-2 font-semibold">
           <img src="/logo.svg" alt="" className="h-7 w-7" />

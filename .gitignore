@@ -35,3 +35,4 @@ data/processed/models/test_predictions.parquet
 .idea/
 .vscode/
 data/processed/transects/per_pass/
+docs/video/source/raw/

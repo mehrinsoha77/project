@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="NadiNet">
+  <rect width="64" height="64" rx="14" fill="#0f1b2d"/>
+  <path d="M22 6c-6 10 8 14 2 24s-14 12-6 28" fill="none" stroke="#3987e5" stroke-width="7" stroke-linecap="round"/>
+  <path d="M40 6c-4 9 9 14 3 24s-12 13-6 28" fill="none" stroke="#3987e5" stroke-width="5" stroke-linecap="round" opacity=".55"/>
+  <circle cx="47" cy="38" r="5" fill="#fab219"/>
+  <path d="M10 18a26 26 0 0 1 10-9M8 30a34 34 0 0 1 14-16" fill="none" stroke="#cde2fb" stroke-width="2.4" stroke-linecap="round"/>
+</svg>

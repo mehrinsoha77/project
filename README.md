@@ -6,6 +6,12 @@
 
 > NadiNet is advisory decision support for officials and NGOs. The absence of an alert does not mean a bank is safe. A person approves every public warning.
 
+## Demo video
+
+[![NadiNet demo video (2:59)](docs/video/thumbnail.png)](docs/video/nadinet_demo.mp4)
+
+A 3-minute walkthrough of the real app: cloudy optical vs radar, the replay (freeze the model, then reveal what happened), the dashboard and the official-approved alert path. Narration script: [docs/video/NARRATION.md](docs/video/NARRATION.md).
+
 ## Results at a glance (all measured; see the [claims ledger](docs/CLAIMS_LEDGER.md))
 
 | What | Result | How |
