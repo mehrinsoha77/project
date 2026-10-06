@@ -7,14 +7,21 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn, pct, segmentLabel, signedMetres } from "@/lib/utils";
 
-type Props = { date: string; preds: Prediction[]; onFocus?: (id: string) => void };
+type Props = {
+  date: string;
+  preds: Prediction[];
+  onFocus?: (id: string) => void;
+  /** most recent date that has Warning-eligible segments, offered when this date has none */
+  jumpDate?: string;
+  onJump?: () => void;
+};
 
 /**
  * Human-in-the-loop alert path. The software proposes; an official decides.
  * Nothing reaches residents without a named official's approval, and in this
  * build the only recipient is a test phone (or the console outbox).
  */
-export function AlertPanel({ date, preds, onFocus }: Props) {
+export function AlertPanel({ date, preds, onFocus, jumpDate, onJump }: Props) {
   const eligible = useMemo(() => preds.filter((p) => p.tier === "warning_eligible").sort((a, b) => a.rank - b.rank), [preds]);
   const [selected, setSelected] = useState<string[]>([]);
   const [place, setPlace] = useState("");
@@ -80,9 +87,16 @@ export function AlertPanel({ date, preds, onFocus }: Props) {
           <ShieldAlert className="h-3.5 w-3.5 text-status-critical" /> Warning-eligible segments ({eligible.length})
         </div>
         {eligible.length === 0 ? (
-          <p className="text-xs text-muted-foreground">
-            None on this pass. Warning needs top-20 risk, probability above the floor set on the calibration year, and retreat on the latest pass.
-          </p>
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">
+              None on this pass. Warning needs top-20 risk, probability above the floor set on the calibration year, and retreat on the latest pass.
+            </p>
+            {jumpDate && onJump && (
+              <Button size="sm" variant="outline" onClick={onJump}>
+                Go to the latest pass with Warning-eligible segments ({jumpDate})
+              </Button>
+            )}
+          </div>
         ) : (
           <ul className="max-h-40 space-y-1 overflow-y-auto pr-1">
             {eligible.map((p) => (

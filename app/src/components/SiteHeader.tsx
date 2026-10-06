@@ -6,9 +6,9 @@ import { Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/demo", label: "Replay demo" },
-  { href: "/about", label: "Method & evidence" },
+  { href: "/dashboard", label: "Dashboard", short: "Dashboard" },
+  { href: "/demo", label: "Replay demo", short: "Replay" },
+  { href: "/about", label: "Method & evidence", short: "Method" },
 ];
 
 export function SiteHeader() {
@@ -27,23 +27,24 @@ export function SiteHeader() {
   };
   return (
     <header className="sticky top-0 z-[1000] border-b bg-background/85 backdrop-blur">
-      <div className="container flex h-14 items-center gap-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
+      <div className="container flex h-14 items-center gap-2 sm:gap-4">
+        <Link href="/" className="flex shrink-0 items-center gap-2 font-semibold">
           <img src="/logo.svg" alt="" className="h-7 w-7" />
           <span>NadiNet</span>
           <span className="bn hidden text-sm font-normal text-muted-foreground sm:inline">নদীনেট</span>
         </Link>
-        <nav className="ml-auto flex items-center gap-1 overflow-x-auto text-sm">
+        <nav className="ml-auto flex min-w-0 items-center gap-0.5 text-sm sm:gap-1">
           {NAV.map((n) => (
             <Link
               key={n.href}
               href={n.href}
               className={cn(
-                "rounded-md px-2.5 py-1.5 text-muted-foreground transition-colors hover:text-foreground",
+                "whitespace-nowrap rounded-md px-2 py-1.5 text-muted-foreground transition-colors hover:text-foreground sm:px-2.5",
                 path?.startsWith(n.href) && "bg-muted text-foreground",
               )}
             >
-              {n.label}
+              <span className="sm:hidden">{n.short}</span>
+              <span className="hidden sm:inline">{n.label}</span>
             </Link>
           ))}
           <button

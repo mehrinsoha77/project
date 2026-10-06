@@ -1,0 +1,9 @@
+.git
+app/node_modules
+app/.next
+data/raw
+data/processed/water_masks
+data/processed/transects/per_pass
+data/processed/features
+notebooks
+**/__pycache__

@@ -47,7 +47,7 @@ What it does **not** claim: a 24-hour collapse forecast, sub-metre maps, bed she
 | **Segment history and reasons** | **Every held-out forecast date** |
 | ![Segment](docs/img/dashboard_segment.png) | ![Precision per date](docs/img/demo_precision.png) |
 | **Human-approved alert path** | **Method & evidence** |
-| ![Alerts](docs/img/dashboard_alerts.png) | ![Evidence](docs/img/evidence.png) |
+| ![Alerts: draft, official approval, outbox](docs/img/alert_sent.png) | ![Evidence](docs/img/evidence.png) |
 
 ## How it works
 
@@ -89,13 +89,21 @@ pip install -r requirements.txt
 bash scripts/start_demo.sh           # API on :8000, dashboard on :3000
 ```
 
+**Docker (full stack, one command):**
+
+```bash
+docker compose up --build            # dashboard http://localhost:3000, API http://localhost:8000/docs
+```
+
+**Deploy:** dashboard on Vercel (project root `app/`, config in `app/vercel.json`; works with no backend), API on Render/Railway from the root `Dockerfile` (`render.yaml` included). Set `NADINET_API_URL` on Vercel to the API's URL to enable the live alert path.
+
 **Reproduce everything from the raw archive** (~1 h on 4 vCPUs, ~11 GB cache):
 
 ```bash
 pip install -r requirements.txt
 bash scripts/run_pipeline.sh         # catalogue → masks → banks → S2 check → labels → features → model
 bash scripts/evaluate_model.sh       # scores 2023–2025 once (re-runs need RERUN_REASON=...)
-python -m pytest                     # 31 tests, incl. tests/test_no_leakage.py on the real archive
+python -m pytest                     # 37 tests, incl. tests/test_no_leakage.py on the real archive
 python notebooks/make_notebooks.py --execute
 ```
 

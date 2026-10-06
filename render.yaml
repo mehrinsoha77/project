@@ -1,0 +1,13 @@
+# Render blueprint for the API. The dashboard goes on Vercel (root directory: app/),
+# with NADINET_API_URL set to this service's URL.
+services:
+  - type: web
+    name: nadinet-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: NADINET_ALERT_GATEWAY
+        value: console
+      - key: NADINET_CORS
+        value: "*"

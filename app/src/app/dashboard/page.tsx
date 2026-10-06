@@ -109,6 +109,7 @@ export default function Dashboard() {
   if (!reach || !date) return <div className="container py-10 text-sm text-muted-foreground">Loading…</div>;
 
   const entry = index[i];
+  const warnIdx = index.reduce((acc, d, k) => ((d.n_warning ?? 0) > 0 ? k : acc), -1);
   const radarUrl = pass?.image && radar ? `/data/${pass.image}` : null;
   return (
     <div className="container py-4">
@@ -175,7 +176,17 @@ export default function Dashboard() {
                 <p className="text-sm text-muted-foreground">Click a segment on the map or in the Top 20 list.</p>
               )}
             </TabsContent>
-            <TabsContent value="alerts">{preds && <AlertPanel date={date} preds={preds} onFocus={select} />}</TabsContent>
+            <TabsContent value="alerts">
+              {preds && (
+                <AlertPanel
+                  date={date}
+                  preds={preds}
+                  onFocus={select}
+                  jumpDate={warnIdx >= 0 && warnIdx !== i ? index[warnIdx].date : undefined}
+                  onJump={() => setI(warnIdx)}
+                />
+              )}
+            </TabsContent>
           </Tabs>
         </aside>
       </div>

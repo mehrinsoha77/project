@@ -72,6 +72,8 @@ export type PredIndex = {
   split: "val" | "test";
   n: number;
   has_outcome: boolean;
+  /** segments that are Warning-eligible on this date */
+  n_warning?: number;
   p20_model: number | null;
   p20_persistence: number | null;
   positives: number | null;

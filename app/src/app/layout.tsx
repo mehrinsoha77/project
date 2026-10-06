@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import "./globals.css";
 import "leaflet/dist/leaflet.css";
+import "./globals.css";
 import { SiteHeader } from "@/components/SiteHeader";
 
 export const metadata: Metadata = {

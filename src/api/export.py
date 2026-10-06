@@ -192,6 +192,7 @@ def prediction_files(pred: pd.DataFrame) -> tuple[list[dict], dict[str, list[dic
             return _r(top["y"].mean(), 3) if len(sub) >= config.TOP_K else None
         index.append(dict(date=ds, year=int(d.year), split="val" if d.year == config.VAL_YEAR else "test",
                           n=int(len(g)), has_outcome=has_outcome,
+                          n_warning=int((g["tier"] == "warning_eligible").sum()),
                           p20_model=p20("rank") if has_outcome else None,
                           p20_persistence=p20("b0_rank") if has_outcome else None,
                           positives=int(sub["y"].sum()) if has_outcome else None))

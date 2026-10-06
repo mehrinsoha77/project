@@ -42,5 +42,7 @@ affects and what would fix it.
 | Raw risk maps can affect land values. | Raw maps stay with officials and partners; public views aggregate to union level. |
 | People without phones. | Warning-tier messages also go to local volunteers and community announcement channels identified with partners. |
 | The Bangla voice clip is **not recorded yet**. | It must be recorded by a native speaker from the target reach. NadiNet does not synthesise speech; the UI says so when the clip is missing. |
-| Earth Engine scripts (`gee/`) were not run. | Results come from the AWS path only; the GEE path is offered for teams with an account. |
+| Earth Engine scripts (`gee/`) were never run against Earth Engine (no account in the build environment). | Their CLIs run, and the Otsu helper is unit-tested against scikit-image with a stand-in for the `ee` API (`tests/test_gateways.py`). Results come from the AWS path only. |
+| Real SMS / voice was never sent. | The Twilio gateway's requests (endpoint, auth, sender, Bangla body, TwiML playing the recorded clip) are tested against a mocked HTTP layer, and approval is enforced; a live test needs Twilio credentials and a test phone. |
+| No public deployment. | Docker images for the API and dashboard build and run together locally (`docker compose up --build`); Vercel and Render configs are included, but deploying needs the team's accounts. |
 | AWS documents the Sentinel-1 bucket as Requester Pays. | In the build environment objects were readable over HTTPS; others may need AWS credentials and pay egress (~40 MB per pass for this reach). |

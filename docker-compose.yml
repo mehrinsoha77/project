@@ -1,0 +1,17 @@
+# Full stack in one command:  docker compose up --build
+#   dashboard  http://localhost:3000
+#   API        http://localhost:8000/docs
+services:
+  api:
+    build: .
+    environment:
+      NADINET_ALERT_GATEWAY: ${NADINET_ALERT_GATEWAY:-console}
+      NADINET_TEST_PHONE: ${NADINET_TEST_PHONE:-}
+      NADINET_CORS: http://localhost:3000
+    ports: ["8000:8000"]
+  web:
+    build: ./app
+    environment:
+      NADINET_API_URL: http://api:8000
+    ports: ["3000:3000"]
+    depends_on: [api]
