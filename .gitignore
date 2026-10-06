@@ -34,3 +34,4 @@ data/processed/models/test_predictions.parquet
 .DS_Store
 .idea/
 .vscode/
+data/processed/transects/per_pass/

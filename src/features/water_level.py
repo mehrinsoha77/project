@@ -27,50 +27,50 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from src import config
-
 
 def stage_from_positions(positions: pd.DataFrame) -> pd.DataFrame:
     """One row per pass: date, stage proxy (km^2)."""
-    s = (positions.groupby("date", as_index=False)
-         .agg(stage_km2=("belt_water_km2", "first"), coverage=("coverage", "first")))
+    s = positions.groupby("date", as_index=False).agg(stage_km2=("belt_water_km2", "first"))
     return s.sort_values("date").reset_index(drop=True)
 
 
-def climatology(stage: pd.DataFrame, years: tuple[int, ...] = config.TRAIN_YEARS) -> pd.Series:
-    """Mean stage by day-of-year from *training years only*, smoothed over +-30 days."""
-    s = stage[stage["date"].dt.year.isin(years)]
-    doy = s["date"].dt.dayofyear.to_numpy()
-    v = s["stage_km2"].to_numpy()
-    grid = np.arange(1, 367)
-    clim = []
-    for d in grid:
-        dd = np.minimum(np.abs(doy - d), 366 - np.abs(doy - d))
-        w = dd <= 30
-        clim.append(np.nanmean(v[w]) if w.any() else np.nan)
-    return pd.Series(clim, index=grid, name="stage_clim_km2")
+def _back_index(d: np.ndarray, j: int, days: int, tol: int) -> int:
+    """Index of the pass (<= j) nearest to d[j] - days, or -1 if none within tol days."""
+    tgt = d[j] - np.timedelta64(days, "D")
+    i = int(np.argmin(np.abs(d[: j + 1] - tgt)))
+    if i == j or abs((d[i] - tgt) / np.timedelta64(1, "D")) > tol:
+        return -1
+    return i
 
 
-def stage_features(stage: pd.DataFrame, clim: pd.Series) -> pd.DataFrame:
-    """As-of features at each pass date, using only passes at or before it."""
+def asof_stage_features(stage: pd.DataFrame) -> pd.DataFrame:
+    """Stage features at each pass using only passes at or before it.
+
+    * ``stage_km2`` – in-belt open water on the pass;
+    * ``stage_change_12d`` / ``_24d`` – change since the pass ~12 / ~24 days earlier
+      (rising or falling river);
+    * ``stage_anom_km2`` – departure from an *as-of* climatology: the mean stage of
+      earlier passes (at least 180 days earlier) within +-30 days of the same day of
+      year; needs >= 3 such passes, else NaN.
+    """
     s = stage.sort_values("date").reset_index(drop=True)
     d = s["date"].values
-    v = s["stage_km2"].to_numpy()
-    out = []
+    v = s["stage_km2"].to_numpy(dtype=float)
+    doy = s["date"].dt.dayofyear.to_numpy()
+    rows = []
     for j in range(len(s)):
-        def back(days: int) -> float:
-            tgt = d[j] - np.timedelta64(days, "D")
-            k = np.flatnonzero(d <= d[j])
-            k = k[np.argmin(np.abs(d[k] - tgt))]
-            gap = abs((d[k] - tgt) / np.timedelta64(1, "D"))
-            return v[k] if (k != j and gap <= 8) else np.nan
-        doy = pd.Timestamp(d[j]).dayofyear
-        out.append(dict(
-            date=pd.Timestamp(d[j]), stage_km2=v[j],
-            stage_change_12d=v[j] - back(12), stage_change_24d=v[j] - back(24),
-            stage_anom_km2=v[j] - clim.loc[min(doy, 366)],
-        ))
-    return pd.DataFrame(out)
+        k12 = _back_index(d, j, 12, 8)
+        k24 = _back_index(d, j, 24, 8)
+        prior = np.arange(j)
+        dd = np.abs(doy[prior] - doy[j])
+        dd = np.minimum(dd, 366 - dd)
+        older = prior[(dd <= 30) & ((d[j] - d[prior]) > np.timedelta64(180, "D"))]
+        clim = np.nanmean(v[older]) if len(older) >= 3 else np.nan
+        rows.append(dict(date=s["date"].iloc[j], stage_km2=v[j],
+                         stage_change_12d=v[j] - v[k12] if k12 >= 0 else np.nan,
+                         stage_change_24d=v[j] - v[k24] if k24 >= 0 else np.nan,
+                         stage_anom_km2=v[j] - clim))
+    return pd.DataFrame(rows)
 
 
 def load_series_csv(path: Path) -> pd.Series:

@@ -42,7 +42,7 @@ class Grid:
         row = (self.transform.f - np.asarray(y)) / px - 0.5
         return row, col
 
-    def coarsen(self, factor: int) -> "Grid":
+    def coarsen(self, factor: int) -> Grid:
         return Grid(self.crs, self.transform * Affine.scale(factor),
                     int(np.ceil(self.width / factor)), int(np.ceil(self.height / factor)))
 

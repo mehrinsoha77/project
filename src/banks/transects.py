@@ -16,7 +16,6 @@ import logging
 
 import geopandas as gpd
 import numpy as np
-import pandas as pd
 from shapely.geometry import LineString, Point
 
 from src import config
@@ -75,7 +74,7 @@ def build_transects() -> gpd.GeoDataFrame:
     gdf["near_bridge"] = [bridge.distance(Point(x, y)) < 1500.0 for x, y in zip(gdf.x0, gdf.y0)]
     # transect must stay inside the reach grid
     xmin, ymin, xmax, ymax = g.bounds
-    inside = gdf.geometry.apply(lambda l: all(xmin <= x <= xmax and ymin <= y <= ymax for x, y in l.coords))
+    inside = gdf.geometry.apply(lambda ln: all(xmin <= x <= xmax and ymin <= y <= ymax for x, y in ln.coords))
     dropped = int((~inside).sum())
     if dropped:
         log.info("dropping %d transects that leave the reach grid", dropped)

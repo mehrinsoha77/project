@@ -35,7 +35,7 @@ BANK_NAME = {"W": "West bank (Sirajganj side)", "E": "East bank (Tangail side)"}
 
 def _map_png(pred: pd.DataFrame, top: pd.DataFrame) -> bytes:
     fig, ax = plt.subplots(figsize=(2.6, 4.2), dpi=150)
-    for bank, g in pred.sort_values("chainage_m").groupby("bank"):
+    for _, g in pred.sort_values("chainage_m").groupby("bank"):
         ax.plot(g["lon"], g["lat"], color="#898781", lw=1)
     ax.scatter(top["lon"], top["lat"], s=18, color="#d03b3b", zorder=3, edgecolor="white", linewidth=0.6)
     for _, r in top.head(5).iterrows():

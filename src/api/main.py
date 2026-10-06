@@ -25,8 +25,17 @@ from pydantic import BaseModel, Field
 
 from src import config
 from src.alerts.brief import build_brief
-from src.alerts.send_alert import (AUDIT, DISCLAIMER, OUTBOX, VOICE_BN, VOICE_EN, Approval, WarningAlert,
-                                   dispatch_warning, get_gateway)
+from src.alerts.send_alert import (
+    AUDIT,
+    DISCLAIMER,
+    OUTBOX,
+    VOICE_BN,
+    VOICE_EN,
+    Approval,
+    WarningAlert,
+    dispatch_warning,
+    get_gateway,
+)
 
 DATA = Path(os.environ.get("NADINET_STATIC_DATA", config.ROOT / "app" / "public" / "data"))
 
@@ -116,7 +125,7 @@ def brief(date: str):
     try:
         build_brief(_predictions(), date, buf)
     except ValueError as e:
-        raise HTTPException(404, str(e))
+        raise HTTPException(404, str(e)) from e
     buf.seek(0)
     return StreamingResponse(buf, media_type="application/pdf",
                              headers={"Content-Disposition": f'inline; filename="nadinet_brief_{date}.pdf"'})
@@ -169,7 +178,7 @@ def approve(alert_id: str, body: ApproveIn) -> dict:
     try:
         sent = dispatch_warning(alert, Approval(body.official_name, body.role, note=body.note))
     except PermissionError as e:
-        raise HTTPException(403, str(e))
+        raise HTTPException(403, str(e)) from e
     rec.update(status="sent" if sent["gateway"] != "console" else "logged_not_sent", dispatch=sent)
     return rec
 

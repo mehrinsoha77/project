@@ -76,7 +76,7 @@ export default function Home() {
             {[
               { icon: Radar, title: "Radar pass", text: "Sentinel-1 VV/VH, track 150, every 12 days. Calibrated, speckle-filtered, geocoded to 10 m." },
               { icon: Droplets, title: "Water mask", text: "Per-scene Otsu threshold on VV, VH rescue for wind-roughened water, small blobs cleaned." },
-              { icon: Ruler, title: "Bank lines", text: "Braid-belt edge measured on 870 transects, every 200 m along both mainland banks." },
+              { icon: Ruler, title: "Bank lines", text: "Braid-belt edge measured on 871 transects, every 200 m along both mainland banks." },
               { icon: Layers, title: "Features", text: "Recent retreat, channel distance, char shielding, river stage, season — only data before the forecast date." },
               { icon: LineChart, title: "28-day risk", text: "LightGBM, isotonic calibration, SHAP reasons. Always shown next to persistence." },
               { icon: BellRing, title: "Human decides", text: "Officials get the brief. A Warning reaches residents only after an official approves it." },

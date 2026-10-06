@@ -56,6 +56,17 @@ S1_PASS_UTC_WINDOW = ("23:45", "23:59:59")
 S1_START = "2015-01-01"
 S1_END = "2025-12-31"
 
+# Geolocation: the GCP grid of every track-150 product puts the reach at
+# ~59.5 m above the WGS84 ellipsoid. The floodplain is ~10-15 m above mean sea
+# level and the geoid lies tens of metres *below* the ellipsoid here, so the
+# true ellipsoidal height is negative and every pass is displaced ~100 m away
+# from the sensor (west). We correct the range position for a constant terrain
+# height. The constant was estimated from 2017-2019 Sentinel-1 / Sentinel-2
+# pairs only (scripts/estimate_geolocation_offset.py); validation numbers are
+# reported on the remaining, independent pairs.
+S1_HEIGHT_CORRECTION = True
+S1_TERRAIN_HEIGHT_ELLIPSOID_M = float(os.environ.get("NADINET_TERRAIN_H", "-26.6"))
+
 # Quantisation of cached sigma0 dB into uint8 (0..254, 255 = nodata).
 DB_MIN, DB_MAX = -30.0, 5.0
 

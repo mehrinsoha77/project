@@ -88,7 +88,7 @@ export default function Dashboard() {
           tooltip: `#${p.rank} ${segmentLabel(p.id)} · ${(p.p * 100).toFixed(0)}%`,
         });
         markers.push({ id: `${p.id}|rk`, at: pt, color: TIER_COLOR[p.tier], radius: 4, label: `${p.rank}`, stroke: "#000" });
-      } else if ((p.last ?? 0) > 0) {
+      } else if (p.mon) {
         markers.push({ id: `${p.id}|mon`, at: pt, color: "#000000", fillOpacity: 0, radius: 3, stroke: "#ffffff", tooltip: `${segmentLabel(p.id)}: retreat on this pass` });
       }
     }

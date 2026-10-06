@@ -6,13 +6,13 @@ type Props = { pass: Pass | undefined; preds: Prediction[] | undefined; totalSeg
 /** Four stat tiles for the selected pass. Counts only; no unmeasured numbers. */
 export function StatsPanel({ pass, preds, totalSegments }: Props) {
   const observed = preds?.length ?? 0;
-  const monitor = preds?.filter((p) => (p.last ?? 0) > 0).length ?? 0;
+  const monitor = preds?.filter((p) => p.mon).length ?? 0;
   const watch = preds?.filter((p) => p.tier === "watch" || p.tier === "warning_eligible").length ?? 0;
   const warn = preds?.filter((p) => p.tier === "warning_eligible").length ?? 0;
   const tiles = [
     { label: "Radar pass", value: pass ? fmtDate(pass.date) : "–", sub: pass ? `${pass.platform} · track 150 · 05:56 local` : "" },
     { label: "Segments seen", value: `${observed} / ${totalSegments}`, sub: "200 m segments with a bank line on this pass" },
-    { label: "Retreat on this pass", value: String(monitor), sub: "Monitor tier (unconfirmed until next pass)" },
+    { label: "Retreat on this pass", value: String(monitor), sub: "Monitor: moved ≥ threshold since last pass (unconfirmed)" },
     { label: "Watch · Warning-eligible", value: `${watch} · ${warn}`, sub: "Warnings still need an official's approval" },
   ];
   return (

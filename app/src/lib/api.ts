@@ -56,6 +56,8 @@ export type Prediction = {
   ret84: number | null;
   ret365: number | null;
   last: number | null;
+  /** retreat on this pass at least the label threshold (Monitor) */
+  mon: boolean;
   pos: number | null;
   y: 0 | 1 | null;
   retreat: number | null;

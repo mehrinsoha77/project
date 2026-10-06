@@ -50,7 +50,7 @@ def run() -> dict:
         log.info("%s: val P@20 %.3f, test P@20 %.3f", name, res["val_2022"]["precision_at_k"],
                  res["test_2023_2025"]["precision_at_k"])
     full = out["full"]
-    for name, r in out.items():
+    for r in out.values():
         for sp in ("val_2022", "test_2023_2025"):
             r[sp]["delta_precision_at_k_vs_full"] = r[sp]["precision_at_k"] - full[sp]["precision_at_k"]
             r[sp]["delta_pr_auc_vs_full"] = r[sp]["pr_auc"] - full[sp]["pr_auc"]

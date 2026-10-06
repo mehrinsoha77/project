@@ -31,7 +31,7 @@ export function RiskLegend({ mode = "risk" }: { mode?: "risk" | "outcome" }) {
       </span>
       <span className="inline-flex items-center gap-1.5">
         <Radar className="h-3.5 w-3.5" />
-        <span className="inline-block h-2.5 w-2.5 rounded-full border-2 border-foreground/70" /> Monitor: retreat seen on this pass
+        <span className="inline-block h-2.5 w-2.5 rounded-full border-2 border-foreground/70" /> Monitor: retreat ≥ threshold on this pass
       </span>
       <LegendItem color="#2a78d6" label="Bank line on this pass" line />
       <LegendItem color="#898781" label="Previous pass" line dashed />

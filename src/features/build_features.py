@@ -5,24 +5,26 @@ dates. **Every feature is as-of**: it is computed only from passes at or
 before the forecast date. ``tests/test_no_leakage.py`` rebuilds the table from
 positions truncated at random dates and fails if any value changes.
 
-Bank position for features is *backward*-confirmed:
+Bank positions for features are robust and strictly backward-looking:
 
-    b2(t) = min{ b(tau) : t - 30 d <= tau <= t }
+    b0(t)   = median of b over passes in [t - 24 d, t]           (current bank, flips removed)
+    perm(t) = 25th percentile of b over passes in [t - 180 d, t] (>= 4 passes; the
+              "permanent" bank, with seasonally flooded margins removed)
 
-i.e. a landward jump on the newest pass is only trusted once a second pass
-sees it. The unconfirmed jump on the newest pass is kept separately as
-``raw_last_change_m`` (it drives the Warning tier).
+The raw move on the newest pass is kept separately as ``raw_last_change_m``
+(it drives the Monitor and Warning tiers). ``inundation_m`` = b0 - perm says
+how far the current water edge sits landward of the permanent bank.
 
 Feature groups (used by the ablation study):
 
 ========================  ====================================================
-recent_retreat            ret_28_m, ret_56_m, ret_84_m, raw_last_change_m
-history                   ret_365_m, n_obs_365
+recent_retreat            ret_28_m, ret_56_m, ret_84_m (b0), raw_last_change_m
+history                   ret_365_m (perm), n_obs_365
 channel_geometry          dist_main_channel_m, d_dist_main_28_m,
                           near_channel_width_m, char_shield_frac,
                           nearbank_water_frac, baseline_curvature, embayment_m
 water_level               stage_km2, stage_change_12d, stage_change_24d,
-                          stage_anom_km2
+                          stage_anom_km2, inundation_m
 season                    doy_sin, doy_cos
 neighbours                nb_ret_84_m, nb_ret_365_m
 bank_height (optional)    bank_height_m
@@ -48,18 +50,21 @@ from src import config
 from src.banks.bank_position import load_positions
 from src.banks.transects import load_transects
 from src.features.geometry import bank_height, baseline_curvature, neighbour_mean
+from src.features.water_level import _back_index, asof_stage_features, stage_from_positions
+from src.labels.make_labels import window_stat
 
 log = logging.getLogger(__name__)
 
 FEATURES_PATH = config.FEATURE_DIR / "features.parquet"
-CONFIRM_BACK_DAYS = 30
+CURRENT_WINDOW_DAYS = 24
+PERMANENT_WINDOW_DAYS = 180
 
 FEATURE_GROUPS: dict[str, list[str]] = {
     "recent_retreat": ["ret_28_m", "ret_56_m", "ret_84_m", "raw_last_change_m"],
     "history": ["ret_365_m", "n_obs_365"],
     "channel_geometry": ["dist_main_channel_m", "d_dist_main_28_m", "near_channel_width_m",
                          "char_shield_frac", "nearbank_water_frac", "baseline_curvature", "embayment_m"],
-    "water_level": ["stage_km2", "stage_change_12d", "stage_change_24d", "stage_anom_km2"],
+    "water_level": ["stage_km2", "stage_change_12d", "stage_change_24d", "stage_anom_km2", "inundation_m"],
     "season": ["doy_sin", "doy_cos"],
     "neighbours": ["nb_ret_84_m", "nb_ret_365_m"],
     "bank_height": ["bank_height_m"],
@@ -70,38 +75,6 @@ ALL_FEATURES = [f for g in FEATURE_GROUPS.values() for f in g]
 def _pivot(pos: pd.DataFrame, col: str, tids: pd.Index, dates: pd.DatetimeIndex) -> np.ndarray:
     w = pos.pivot_table(index="transect_id", columns="date", values=col, aggfunc="first")
     return w.reindex(index=tids, columns=dates).to_numpy(dtype=float)
-
-
-def _back_index(d: np.ndarray, j: int, days: int, tol: int) -> int:
-    """Index of the pass (<= j) nearest to d[j] - days, or -1 if none within tol."""
-    tgt = d[j] - np.timedelta64(days, "D")
-    k = np.arange(j + 1)
-    i = int(k[np.argmin(np.abs(d[: j + 1] - tgt))])
-    if i == j or abs((d[i] - tgt) / np.timedelta64(1, "D")) > tol:
-        return -1
-    return i
-
-
-def _asof_stage(stage: pd.DataFrame) -> pd.DataFrame:
-    """Stage features using only passes at or before each date (incl. an as-of climatology)."""
-    s = stage.sort_values("date").reset_index(drop=True)
-    d = s["date"].values
-    v = s["stage_km2"].to_numpy(dtype=float)
-    doy = s["date"].dt.dayofyear.to_numpy()
-    rows = []
-    for j in range(len(s)):
-        k12 = _back_index(d, j, 12, 8)
-        k24 = _back_index(d, j, 24, 8)
-        prior = np.arange(j)                       # strictly earlier passes
-        dd = np.abs(doy[prior] - doy[j])
-        dd = np.minimum(dd, 366 - dd)
-        older = prior[(dd <= 30) & ((d[j] - d[prior]) > np.timedelta64(180, "D"))]
-        clim = np.nanmean(v[older]) if len(older) >= 3 else np.nan
-        rows.append(dict(date=s["date"].iloc[j], stage_km2=v[j],
-                         stage_change_12d=v[j] - v[k12] if k12 >= 0 else np.nan,
-                         stage_change_24d=v[j] - v[k24] if k24 >= 0 else np.nan,
-                         stage_anom_km2=v[j] - clim))
-    return pd.DataFrame(rows)
 
 
 def build(positions: pd.DataFrame, transects: pd.DataFrame | None = None,
@@ -127,27 +100,29 @@ def build(positions: pd.DataFrame, transects: pd.DataFrame | None = None,
     NW = _pivot(pos, "nearbank_water_frac", tids, dates)
     BH = _pivot(pos, "bank_height_m", tids, dates)
 
-    # backward-confirmed positions
-    B2 = np.full_like(B, np.nan)
+    # robust, backward-looking positions (see module docstring)
+    day = np.timedelta64(1, "D")
+    B0 = np.full_like(B, np.nan)
+    PERM = np.full_like(B, np.nan)
     for j in range(len(d)):
-        k = np.flatnonzero((d <= d[j]) & (d >= d[j] - np.timedelta64(CONFIRM_BACK_DAYS, "D")))
-        with np.errstate(all="ignore"):
-            B2[:, j] = np.nanmin(B[:, k], axis=1)
+        B0[:, j] = window_stat(B, (d <= d[j]) & (d >= d[j] - CURRENT_WINDOW_DAYS * day), "median")
+        PERM[:, j] = window_stat(B, (d <= d[j]) & (d >= d[j] - PERMANENT_WINDOW_DAYS * day), "q25", 4)
     has_now = np.isfinite(B)
-    B2[~has_now] = np.nan   # a forecast needs an observation on its own pass
+    B0[~has_now] = np.nan   # a forecast needs an observation on its own pass
 
-    stage = _asof_stage(pos.groupby("date", as_index=False)
-                        .agg(stage_km2=("belt_water_km2", "first")))
+    stage = asof_stage_features(stage_from_positions(pos)[["date", "stage_km2"]])
     stage = stage.set_index("date")
 
     frames = []
     for j, t in enumerate(dates):
         f = pd.DataFrame({"transect_id": tids, "forecast_date": t})
-        now = B2[:, j]
-        for days, tol, name in ((28, 12, "ret_28_m"), (56, 12, "ret_56_m"),
-                                (84, 12, "ret_84_m"), (365, 30, "ret_365_m")):
+        now = B0[:, j]
+        for days, tol, name in ((28, 12, "ret_28_m"), (56, 12, "ret_56_m"), (84, 12, "ret_84_m")):
             k = _back_index(d, j, days, tol)
-            f[name] = now - B2[:, k] if k >= 0 else np.nan
+            f[name] = now - B0[:, k] if k >= 0 else np.nan
+        k365 = _back_index(d, j, 365, 30)
+        f["ret_365_m"] = PERM[:, j] - PERM[:, k365] if k365 >= 0 else np.nan
+        f["inundation_m"] = now - PERM[:, j]
         kp = j - 1 if j > 0 and (d[j] - d[j - 1]) <= np.timedelta64(30, "D") else -1
         f["raw_last_change_m"] = B[:, j] - B[:, kp] if kp >= 0 else np.nan
         last_year = (d <= d[j]) & (d > d[j] - np.timedelta64(365, "D"))

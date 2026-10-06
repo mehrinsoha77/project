@@ -25,12 +25,13 @@ import logging
 import math
 from pathlib import Path
 
-import geopandas as gpd
 import numpy as np
 import pandas as pd
 import rasterio
+from affine import Affine
 from PIL import Image
-from rasterio.warp import Resampling, calculate_default_transform, reproject
+from rasterio.warp import Resampling, calculate_default_transform, reproject, transform_bounds
+from rasterio.windows import from_bounds
 
 from src import config
 from src.alerts.send_alert import assign_tiers, tier_thresholds
@@ -42,7 +43,7 @@ from src.explain.shap_reasons import explain, global_importance
 from src.features.build_features import load_features
 from src.geo import reach_grid, to_lonlat
 from src.labels.make_labels import LABELS_ALL
-from src.masks.s1_io import pass_path
+from src.masks.s1_io import GDAL_ENV
 from src.models.calibrate import apply, load_calibrators
 from src.models.train_lgbm import load_model, load_params
 
@@ -167,6 +168,7 @@ def banks_by_year(positions: pd.DataFrame) -> dict[int, dict]:
 
 def prediction_files(pred: pd.DataFrame) -> tuple[list[dict], dict[str, list[dict]]]:
     index, files = [], {}
+    thr = json.loads((config.METRICS_DIR / "label_stats.json").read_text())["threshold_m"]
     for d, g in pred.groupby("forecast_date"):
         ds = d.strftime("%Y-%m-%d")
         has_outcome = bool(g["y"].notna().any())
@@ -176,6 +178,7 @@ def prediction_files(pred: pd.DataFrame) -> tuple[list[dict], dict[str, list[dic
                 id=r.transect_id, p=_r(r.p, 4), rank=int(r.rank), b0_rank=int(r.b0_rank), tier=r.tier,
                 ret28=_r(r.ret_28_m, 0), ret84=_r(r.ret_84_m, 0), ret365=_r(r.ret_365_m, 0),
                 last=_r(r.raw_last_change_m, 0), pos=_r(r.bank_pos_m, 0),
+                mon=bool(np.isfinite(r.raw_last_change_m) and r.raw_last_change_m >= thr),
                 y=None if pd.isna(r.y) else int(r.y), retreat=_r(r.retreat_m, 0),
                 major=None if pd.isna(r.major) else int(r.major),
                 target=None if pd.isna(r.target_date) else r.target_date.strftime("%Y-%m-%d"),
@@ -183,7 +186,8 @@ def prediction_files(pred: pd.DataFrame) -> tuple[list[dict], dict[str, list[dic
             ))
         files[ds] = rows
         sub = g.dropna(subset=["y"])
-        def p20(col):
+
+        def p20(col: str, sub: pd.DataFrame = sub) -> float | None:
             top = sub.nsmallest(config.TOP_K, col)
             return _r(top["y"].mean(), 3) if len(sub) >= config.TOP_K else None
         index.append(dict(date=ds, year=int(d.year), split="val" if d.year == config.VAL_YEAR else "test",
@@ -214,6 +218,9 @@ def metrics_json(pred: pd.DataFrame | None) -> dict:
                 if k in m["test_results"].get(part, {}):
                     m["test_results"][part][k] = {kk: vv for kk, vv in m["test_results"][part][k].items()
                                                   if kk != "per_date"}
+    cl = config.METRICS_DIR / "claims.json"
+    if cl.exists():
+        m["claims"] = json.loads(cl.read_text())
     gi = config.METRICS_DIR / "importance.json"
     if gi.exists():
         m["importance"] = json.loads(gi.read_text())
@@ -299,6 +306,93 @@ def reach_geojson(reach: dict) -> dict:
     return dict(type="FeatureCollection", features=feats)
 
 
+def _render_to_mercator(arrays: list[np.ndarray], src_transform, src_crs, nodata, bounds_lonlat,
+                        resampling=Resampling.average) -> tuple[np.ndarray, list[float]]:
+    """Reproject bands to Web Mercator over a lon/lat box at IMAGE_PIXEL_M."""
+    from pyproj import Transformer
+    w_, s_, e_, n_ = bounds_lonlat
+    t = Transformer.from_crs("EPSG:4326", "EPSG:3857", always_xy=True)
+    (x0, y0), (x1, y1) = t.transform(w_, s_), t.transform(e_, n_)
+    px = IMAGE_PIXEL_M / np.cos(np.radians((s_ + n_) / 2))      # ~40 m on the ground
+    w, h = int(np.ceil((x1 - x0) / px)), int(np.ceil((y1 - y0) / px))
+    dst_tr = Affine(px, 0, x0, 0, -px, y1)
+    out = []
+    for a in arrays:
+        dst = np.full((h, w), nodata, a.dtype)
+        reproject(a, dst, src_transform=src_transform, src_crs=src_crs, src_nodata=nodata, dst_transform=dst_tr,
+                  dst_crs="EPSG:3857", dst_nodata=nodata, resampling=resampling)
+        out.append(dst)
+    return np.stack(out), [s_, w_, n_, e_]
+
+
+def export_wow(out: Path = APP_DATA, years=(2023, 2024, 2025), min_cloud: float = 80.0) -> dict | None:
+    """The monsoon blind spot: a real cloudy Sentinel-2 scene and the radar pass of the same week."""
+    from src.masks.validate_masks import S2_BUCKET, item_meta, list_s2_items
+    passes = pd.read_csv(config.MASK_DIR / "mask_summary.csv")
+    passes["d"] = pd.to_datetime(passes["date"])
+    best = None
+    for y in years:
+        for mth in (6, 7, 8, 9):
+            for pref in list_s2_items("45/R/YH", y, mth):
+                meta = item_meta(pref)
+                if not meta or meta["cloud"] < min_cloud or meta["nodata"] > 20:
+                    continue
+                d = pd.Timestamp(meta["datetime"][:10])
+                gap = (passes["d"] - d).abs().dt.days
+                k = gap.idxmin()
+                if gap[k] > 2 or not (config.S1_RAW / f"S1_{passes.loc[k, 'pass_id']}_r{config.S1_RELATIVE_ORBIT:03d}.tif").exists():
+                    continue
+                score = (meta["cloud"], -gap[k])
+                if best is None or score > best[0]:
+                    best = (score, meta, passes.loc[k])
+    if best is None:
+        log.warning("no cloudy S2 / S1 pair found")
+        return None
+    _, meta, p = best
+    bounds = (config.REACH.lon_min, 24.32, config.REACH.lon_max, config.REACH.lat_max)   # inside S2 tile 45RYH
+    with rasterio.Env(**GDAL_ENV):
+        with rasterio.open(f"/vsicurl/{S2_BUCKET}/{meta['prefix']}TCI.tif") as ds:
+            wb = transform_bounds("EPSG:4326", ds.crs, *bounds)
+            win = from_bounds(*wb, ds.transform).round_offsets().round_lengths()
+            tci = ds.read(window=win)
+            tci_tr = ds.window_transform(win)
+            s2_crs = ds.crs
+    rgb, b = _render_to_mercator([tci[i] for i in range(3)], tci_tr, s2_crs, 0, bounds)
+    s2_img = np.moveaxis(rgb, 0, -1)
+    alpha = np.where(s2_img.sum(-1) == 0, 0, 255).astype(np.uint8)
+    (out / "wow").mkdir(parents=True, exist_ok=True)
+    Image.fromarray(np.dstack([s2_img, alpha]), "RGBA").save(out / "wow" / "s2.webp", "WEBP", quality=70)
+    g = reach_grid()
+    with rasterio.open(config.S1_RAW / f"S1_{p['pass_id']}_r{config.S1_RELATIVE_ORBIT:03d}.tif") as ds:
+        q = ds.read(1)
+    (qq,), _ = _render_to_mercator([q], g.transform, g.crs, 255, bounds)
+    db = qq.astype(np.float32) / 254 * (config.DB_MAX - config.DB_MIN) + config.DB_MIN
+    v = (np.clip((db + 25.0) / 25.0, 0, 1) ** 0.9 * 255).astype(np.uint8)
+    a = np.where(qq == 255, 0, 255).astype(np.uint8)
+    Image.fromarray(np.dstack([v, v, v, a]), "RGBA").save(out / "wow" / "s1.webp", "WEBP", quality=70)
+    wow = dict(s2=dict(url="/data/wow/s2.webp", date=meta["datetime"][:10], cloud=meta["cloud"], id=meta["id"]),
+               s1=dict(url="/data/wow/s1.webp", date=str(p["date"]), pass_id=p["pass_id"]), bounds=b)
+    write_json(out / "wow" / "wow.json", wow)
+    return wow
+
+
+def export_briefs(pred: pd.DataFrame, out: Path = APP_DATA) -> int:
+    """Precompute the weekly PDF brief for every forecast date (offline demo)."""
+    from src.alerts.brief import build_brief
+    pred = pred.copy()
+    stats = config.METRICS_DIR / "label_stats.json"
+    n = 0
+    for d in sorted(pred["forecast_date"].unique()):
+        ds = pd.Timestamp(d).strftime("%Y-%m-%d")
+        sub = pred[pred["forecast_date"] == d].copy()
+        if stats.exists():
+            sub.attrs["threshold_m"] = json.loads(stats.read_text())["threshold_m"]
+        (out / "briefs").mkdir(parents=True, exist_ok=True)
+        build_brief(sub, ds, out / "briefs" / f"{ds}.pdf")
+        n += 1
+    return n
+
+
 def write_importance() -> None:
     from src.models.data import load_dataset, temporal_split
     df = load_dataset()
@@ -312,12 +406,19 @@ def write_importance() -> None:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--images", action="store_true", help="re-render radar previews (needs data/raw/sentinel1)")
+    ap.add_argument("--no-briefs", action="store_true")
     a = ap.parse_args()
     logging.basicConfig(level=logging.INFO)
     pred = predictions_all()
     save_predictions(pred)
     write_importance()
+    from src.claims import ledger
+    (config.METRICS_DIR / "claims.json").write_text(json.dumps(ledger(), indent=2, ensure_ascii=False))
     export_static(pred, images=a.images)
+    if a.images:
+        export_wow()
+    if not a.no_briefs:
+        log.info("%d briefs", export_briefs(pred))
     print("exported", pred["forecast_date"].nunique(), "forecast dates")
 
 

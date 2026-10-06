@@ -125,13 +125,22 @@ def positions_for_mask(mask: np.ndarray, rows: np.ndarray, cols: np.ndarray, s: 
                              belt_water_km2=float((belt & water).sum() * config.REACH.pixel_m ** 2 / 1e6)))
 
 
+PER_PASS = config.TRANSECT_DIR / "per_pass"
+
+
 def _one(pass_id: str, rows, cols, s, tids) -> pd.DataFrame | None:
+    """Positions for one pass, cached per pass (re-used unless the mask is newer)."""
     p = mask_path(pass_id)
     if not p.exists():
         return None
+    cache = PER_PASS / f"{pass_id}.parquet"
+    if cache.exists() and cache.stat().st_mtime >= p.stat().st_mtime:
+        return pd.read_parquet(cache)
     df = positions_for_mask(read_mask(p), rows, cols, s)
     df.insert(0, "transect_id", tids)
     df.insert(0, "pass_id", pass_id)
+    PER_PASS.mkdir(parents=True, exist_ok=True)
+    df.to_parquet(cache, index=False)
     return df
 
 

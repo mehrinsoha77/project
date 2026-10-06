@@ -1,0 +1,25 @@
+# Exact versions used to produce the committed results (Python 3.13.16, Linux x86_64)
+numpy==2.5.3
+pandas==3.0.5
+scipy==1.18.1
+pyarrow==25.0.1
+rasterio==1.5.2
+shapely==2.1.2
+geopandas==1.2.0
+pyogrio==0.13.0
+pyproj==3.8.0
+affine==3.0.1
+scikit-image==0.26.0
+requests==2.34.2
+pillow==12.3.0
+lightgbm==4.7.0
+scikit-learn==1.9.1
+shap==0.52.0
+fastapi==0.142.2
+uvicorn==0.53.0
+pydantic==2.13.5
+httpx==0.28.1
+reportlab==5.0.1
+matplotlib==3.11.2
+pytest==9.1.1
+ruff==0.16.10

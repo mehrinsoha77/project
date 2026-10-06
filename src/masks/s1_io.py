@@ -11,7 +11,11 @@ Processing per pass (one relative orbit, one datatake):
 3. calibrate DN to sigma0 with the product's own sigmaNought LUT;
 4. apply a Lee speckle filter in radar geometry;
 5. geocode onto the fixed reach grid by inverting the product's GCP grid
-   (a bicubic spline through the 21 x 10 tie points, solved by Newton steps);
+   (a bicubic spline through the 21 x 10 tie points, solved by Newton steps),
+   with a range correction for the true terrain height (the GCP grid puts the
+   floodplain ~60 m above the ellipsoid, while it actually lies below it;
+   uncorrected, every pass lands ~100 m too far west — see
+   ``height_correct_pixels`` and docs/METHODOLOGY.md);
 6. store VV and VH sigma0 in dB, quantised to uint8, as one GeoTIFF per pass.
 
 Known simplifications (documented in docs/LIMITATIONS.md):
@@ -212,6 +216,43 @@ def read_sigma_lut(prefix: str, pol: str) -> tuple[np.ndarray, np.ndarray, np.nd
     return lines[keep], pixels, vals[keep]
 
 
+def read_geolocation_grid(prefix: str, pol: str = "vv") -> dict:
+    """Incidence angle and GCP height on the annotation's geolocation grid, plus range pixel spacing."""
+    xml = _get(f"{config.S1_BUCKET_URL}/{prefix}annotation/iw-{pol}.xml").text
+    root = ET.fromstring(xml)
+    pts = [(int(g.find("line").text), int(g.find("pixel").text), float(g.find("height").text),
+            float(g.find("incidenceAngle").text)) for g in root.iter("geolocationGridPoint")]
+    lines = np.array(sorted({p[0] for p in pts}), float)
+    pixels = np.array(sorted({p[1] for p in pts}), float)
+    li = {v: i for i, v in enumerate(lines)}
+    pi = {v: i for i, v in enumerate(pixels)}
+    h = np.full((len(lines), len(pixels)), np.nan)
+    inc = np.full_like(h, np.nan)
+    for ln, px, hh, ia in pts:
+        h[li[ln], pi[px]] = hh
+        inc[li[ln], pi[px]] = ia
+    spacing = float(root.find(".//rangePixelSpacing").text)
+    return dict(lines=lines, pixels=pixels, height=h, incidence=inc, range_spacing=spacing)
+
+
+def height_correct_pixels(line: np.ndarray, pix: np.ndarray, geo: dict, terrain_h: float) -> np.ndarray:
+    """Range shift for terrain that is not at the height the GCP grid assumes.
+
+    The GCP grid places every pixel at the annotation height h_gcp. A point
+    that is really at ellipsoidal height h appears Δh / tan(θ) closer to the
+    sensor in ground range (Δh = h - h_gcp). GRD pixel index grows with range,
+    so the sample position for that ground point is pix - Δh / (tan θ · spacing).
+    """
+    sh = RectBivariateSpline(geo["lines"], geo["pixels"], geo["height"], kx=1, ky=1)
+    si = RectBivariateSpline(geo["lines"], geo["pixels"], geo["incidence"], kx=1, ky=1)
+    lc = np.clip(line, geo["lines"][0], geo["lines"][-1])
+    pc = np.clip(pix, geo["pixels"][0], geo["pixels"][-1])
+    h_gcp = sh.ev(lc, pc)
+    theta = np.radians(si.ev(lc, pc))
+    dh = terrain_h - h_gcp
+    return pix - dh / (np.tan(theta) * geo["range_spacing"])
+
+
 def lee_filter(intensity: np.ndarray, valid: np.ndarray, size: int, enl: float = 4.4) -> np.ndarray:
     """Classic Lee filter on linear intensity; nodata pixels are ignored (float32 throughout)."""
     img = np.where(valid, intensity, 0.0).astype(np.float32)
@@ -262,8 +303,10 @@ class GcpModel:
         for _ in range(iters):
             f1 = self.slon.ev(r, c) - lon.ravel()
             f2 = self.slat.ev(r, c) - lat.ravel()
-            a = self.slon.ev(r, c, dx=1); b = self.slon.ev(r, c, dy=1)
-            cc = self.slat.ev(r, c, dx=1); d = self.slat.ev(r, c, dy=1)
+            a = self.slon.ev(r, c, dx=1)
+            b = self.slon.ev(r, c, dy=1)
+            cc = self.slat.ev(r, c, dx=1)
+            d = self.slat.ev(r, c, dy=1)
             det = a * d - b * cc
             r = r - (d * f1 - b * f2) / det
             c = c - (-cc * f1 + a * f2) / det
@@ -299,6 +342,9 @@ def _read_slice(sl: Slice, grid: Grid, chunk: int = 512) -> dict[str, np.ndarray
             gcps, _ = src.gcps
             model = GcpModel(gcps)
             lr_c, lc_c = coarse_radar_coords(model, grid)
+            if config.S1_HEIGHT_CORRECTION:
+                lc_c = height_correct_pixels(lr_c, lc_c, read_geolocation_grid(sl.prefix),
+                                             config.S1_TERRAIN_HEIGHT_ELLIPSOID_M)
             H, W = src.height, src.width
             ins = (lr_c >= 0) & (lr_c <= H - 1) & (lc_c >= 0) & (lc_c <= W - 1)
             if ins.sum() < 4:
@@ -414,3 +460,20 @@ def read_pass_db(path: Path) -> tuple[np.ndarray, np.ndarray, dict]:
         vh = dequantise_db(ds.read(2))
         tags = ds.tags()
     return vv, vh, tags
+
+
+def main() -> None:
+    import argparse
+
+    ap = argparse.ArgumentParser(description="Build the Sentinel-1 pass catalogue for the reach.")
+    ap.add_argument("--start", default=config.S1_START)
+    ap.add_argument("--end", default=config.S1_END)
+    ap.add_argument("--workers", type=int, default=16)
+    a = ap.parse_args()
+    logging.basicConfig(level=logging.INFO)
+    passes = build_catalog(a.start, a.end, workers=a.workers, out=config.PROCESSED / "s1_catalog.json")
+    print(f"{len(passes)} passes of relative orbit {config.S1_RELATIVE_ORBIT}")
+
+
+if __name__ == "__main__":
+    main()

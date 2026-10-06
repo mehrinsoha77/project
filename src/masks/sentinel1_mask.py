@@ -30,7 +30,7 @@ import pandas as pd
 import rasterio
 from scipy import ndimage
 from skimage.filters import threshold_otsu
-from skimage.morphology import remove_small_holes, remove_small_objects
+from skimage.morphology import remove_small_objects
 
 from src import config
 from src.geo import reach_grid

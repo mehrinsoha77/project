@@ -1,0 +1,23 @@
+[project]
+name = "nadinet"
+version = "3.0.0"
+description = "Sentinel-1 riverbank monitoring and 28-day erosion risk ranking for the Jamuna"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+extend-exclude = ["app", "notebooks"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E501", "B008", "UP007", "B905"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = ["ignore::DeprecationWarning", "ignore:All-NaN slice encountered:RuntimeWarning", "ignore:Mean of empty slice:RuntimeWarning"]

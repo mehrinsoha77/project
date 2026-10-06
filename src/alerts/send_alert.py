@@ -2,7 +2,8 @@
 
 NadiNet never sends a public warning on its own:
 
-* **Monitor** – any retreat detected on the latest pass → dashboard only.
+* **Monitor** – retreat on the latest pass at least as large as the label
+  threshold (i.e. above the measured bank-position noise) → dashboard only.
 * **Watch** – segment in the top 20 by calibrated risk → weekly brief to
   officials and NGO partners.
 * **Warning** – high calibrated risk *and* retreat on the latest pass, *and*
@@ -79,7 +80,9 @@ def tier_thresholds(val_scored: pd.DataFrame | None = None, label_threshold_m: f
 def assign_tiers(pred: pd.DataFrame, th: TierThresholds) -> pd.Series:
     """pred needs rank, p (calibrated), raw_last_change_m."""
     tier = pd.Series("none", index=pred.index)
-    tier[pred["raw_last_change_m"].fillna(0) > 0] = "monitor"
+    # Monitor: a landward move on the latest pass at least as large as the label threshold
+    # (smaller moves are within the measured bank-position noise)
+    tier[pred["raw_last_change_m"].fillna(0) >= th.warning_min_last_retreat_m] = "monitor"
     watch = pred["rank"] <= th.watch_top_k
     tier[watch] = "watch"
     warn = watch & (pred["p"] >= th.warning_min_prob) & \

@@ -13,7 +13,7 @@ One comparison decides the project:
 ## Unit of prediction
 
 * **Segment** — a 200 m stretch of one mainland bank, represented by one
-  transect cast perpendicular to a fixed baseline (870 transects, both banks,
+  transect cast perpendicular to a fixed baseline (871 transects, both banks,
   Kazipur to Chauhali, 24.10–24.85 °N).
 * **Forecast date** — every Sentinel-1 pass of descending relative orbit
   150. A forecast is issued right after a pass and uses only passes at or
@@ -25,17 +25,21 @@ One comparison decides the project:
 ## Label
 
 ```
-R_s(t1, t2) = b*_s(t2) - b*_s(t1)
-y_s(t)      = 1[ R_s(t, t + 28 d) >= threshold ]
-b*_s(t)     = min{ b_s(tau) : t <= tau <= t + 36 d }      (forward confirmation, labels only)
+b0  = median of b over the passes in [t - 24 d, t]
+b1  = median of b over the passes within +-12 d of t_target      (t_target = pass nearest t + 28 d, accepted if within +-8 d)
+bp  = 25th percentile of b over the passes in [t_target, t_target + 180 d]   (at least 4 passes)
+R   = b1 - b0          retreat observed in the 28-day window
+P   = bp - b0          retreat still there through the next low water
+y   = 1[ R >= threshold and P >= threshold ]
 threshold   = max(20 m, 2 x median bank-position error vs Sentinel-2)
-major event = R >= 100 m
+major event = R >= 100 m and P >= 100 m
 ```
 
-Forward confirmation means a landward jump only counts if the bank stays
-there for about a month (three revisits); flood edges and single bad masks
-come back and are not counted. It uses future passes, which is legitimate for
-a label and never available to features.
+The medians remove single-pass flips (a side channel opening or closing).
+The permanence term removes inundation: low land next to the bank floods in
+June–August and drains in September–November, which moves the water edge by
+hundreds of metres without any erosion. A 180-day window always contains
+low-water passes. Labels may use future passes; features never do.
 
 ## Splits
 
@@ -60,8 +64,8 @@ a label and never available to features.
 
 | | Score |
 |---|---|
-| **B0 persistence** | retreat over the last 84 days (two-pass-confirmed bank positions) |
-| **B1 history** | retreat over the previous 12 months |
+| **B0 persistence** | retreat over the last 84 days of the current bank (3-pass median) |
+| **B1 history** | retreat over the previous 12 months of the permanent bank (6-month 25th percentile) |
 | **M1** | LightGBM on the feature table, isotonic-calibrated on 2022 |
 
 ## Metrics
@@ -111,6 +115,27 @@ is a finding.
   `gee/` implement the same method but produced none of the results.
 * **Coherence** and the **neural-operator surrogate** were not built; the
   ledger says so instead of reporting a number.
+
+## Changes made before the first test run (with reasons)
+
+All decided on training-period data (2015–2017 bank positions and
+2017–2019 Sentinel-2 pairs); no 2022–2025 outcome had been computed.
+
+1. **Geolocation correction.** Sentinel-1 banks were ~100 m west of
+   Sentinel-2 banks on both sides (GCP terrain height). A constant terrain
+   height, fitted on 2017–2019 pairs, now corrects the range position; the
+   validation statistics use the other pairs.
+2. **Optical reference for bank error** = active channel (water + bare sand,
+   MNDWI > 0 or NDVI < 0.15), because C-band sees dry sand as dark as water.
+   IoU against open water alone is reported too.
+3. **Label definition.** The first version (forward minimum over 36 days)
+   turned single riverward flips into false retreats and could not separate
+   monsoon inundation from erosion: in 2015–2017, landward jumps > 200 m hit
+   13% of consecutive passes, clustered in June–August and reversed in
+   September–November. Replaced by the median/permanence definition above.
+   Features moved to the same robust positions (3-pass median; 6-month 25th
+   percentile), and `inundation_m` was added to the stage group.
+4. Transect count is 871 (baselines rebuilt from the corrected 2015 masks).
 
 ## Changes after the first test run
 

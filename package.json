@@ -1,0 +1,17 @@
+{
+  "name": "nadinet",
+  "version": "3.0.0",
+  "private": true,
+  "description": "NadiNet: Sentinel-1 riverbank monitoring and 28-day erosion risk for the Jamuna",
+  "license": "MIT",
+  "scripts": {
+    "postinstall": "npm --prefix app install",
+    "dev": "npm --prefix app run dev",
+    "build": "npm --prefix app run build",
+    "start": "npm --prefix app run start",
+    "typecheck": "npm --prefix app run typecheck",
+    "api": "uvicorn src.api.main:app --port 8000",
+    "test": "python -m pytest",
+    "demo": "bash scripts/start_demo.sh"
+  }
+}
