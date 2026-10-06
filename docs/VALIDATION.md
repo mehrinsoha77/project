@@ -1,0 +1,117 @@
+# Validation protocol
+
+**Status: fixed before the test years were scored.** This file and the success
+criteria in the README were committed before `python -m src.models.evaluate`
+was first run; `git log -- docs/VALIDATION.md` shows the order. Any change
+after the first test run is listed at the bottom with its reason.
+
+One comparison decides the project:
+
+> Does the model rank at-risk bank segments better than persistence on
+> years it never saw?
+
+## Unit of prediction
+
+* **Segment** — a 200 m stretch of one mainland bank, represented by one
+  transect cast perpendicular to a fixed baseline (870 transects, both banks,
+  Kazipur to Chauhali, 24.10–24.85 °N).
+* **Forecast date** — every Sentinel-1 pass of descending relative orbit
+  150. A forecast is issued right after a pass and uses only passes at or
+  before it.
+* **Target** — did the segment's bank move landward by at least the
+  threshold between the forecast pass and the pass nearest to 28 days later
+  (accepted only if within ±8 days)?
+
+## Label
+
+```
+R_s(t1, t2) = b*_s(t2) - b*_s(t1)
+y_s(t)      = 1[ R_s(t, t + 28 d) >= threshold ]
+b*_s(t)     = min{ b_s(tau) : t <= tau <= t + 36 d }      (forward confirmation, labels only)
+threshold   = max(20 m, 2 x median bank-position error vs Sentinel-2)
+major event = R >= 100 m
+```
+
+Forward confirmation means a landward jump only counts if the bank stays
+there for about a month (three revisits); flood edges and single bad masks
+come back and are not counted. It uses future passes, which is legitimate for
+a label and never available to features.
+
+## Splits
+
+| Split | Years | Use |
+|---|---|---|
+| Train | 2015–2021 | fit the model |
+| Validation | 2022 | choose hyper-parameters from a fixed grid, fit isotonic calibration, set alert-tier thresholds |
+| Test | 2023–2025 | scored **once** |
+
+* **Temporal hold-out**: as above.
+* **Spatial hold-out**: train on the upstream (northern) half of each bank
+  (split at the median chainage), tune and calibrate on upstream 2022, test
+  on the downstream half in 2023–2025.
+* **No leakage**: every feature is as-of the forecast date.
+  `tests/test_no_leakage.py` rebuilds the feature table from positions
+  truncated at random dates and fails if any value changes; it also proves it
+  can catch a planted leak. No location features (chainage, bank side) are
+  given to the model. No water-level *forecasts* are used anywhere (none were
+  available); river stage is proxied by observed in-belt water area.
+
+## Methods compared
+
+| | Score |
+|---|---|
+| **B0 persistence** | retreat over the last 84 days (two-pass-confirmed bank positions) |
+| **B1 history** | retreat over the previous 12 months |
+| **M1** | LightGBM on the feature table, isotonic-calibrated on 2022 |
+
+## Metrics
+
+* **Precision@20** per forecast date: share of the 20 highest-ranked
+  segments that lost at least the threshold within 28 days. Reported as the
+  mean over test dates, and over monsoon (Jun–Oct) dates.
+* **Difference M1 − B0** in per-date precision@20, with a 95% interval from
+  a moving-block bootstrap (blocks of 3 consecutive forecast dates,
+  4,000 resamples) because consecutive dates share overlapping windows.
+* **Recall of major events**: share of (segment, date) pairs with
+  R ≥ 100 m whose segment was in the top 20 beforehand.
+* **PR-AUC**, **Brier score**, **reliability diagram** (10 fixed bins).
+  Baselines are isotonic-calibrated on 2022 the same way, so Brier scores
+  compare like with like.
+* **Detection accuracy**: water-mask IoU and median bank-position error
+  against cloud-free Sentinel-2 (MNDWI) scenes within ±2 days.
+* **Ablations**: drop each feature group, retrain with M1's settings,
+  recalibrate on 2022, report the change. Reporting only — never used to
+  pick the model.
+
+## Success levels (evaluated mechanically in `src/models/evaluate.py`)
+
+| Level | Criterion |
+|---|---|
+| Minimum | median bank-position error ≤ 20 m **and** detection ran on every catalogued pass 2015–2025 |
+| Good | M1 beats B0 on test precision@20 with a bootstrap 95% interval that excludes zero |
+| Strong | Good, **and** the same on the spatial hold-out, **and** a lower Brier score than B0 |
+
+If the model does not beat persistence, that is reported plainly. Cloud-proof
+detection plus a persistence ranking is still useful, and the negative result
+is a finding.
+
+## Test-once rule
+
+`src/models/evaluate.py` refuses to run a second time unless
+`--rerun-reason` is given; every run is appended to
+`data/processed/metrics/test_runs.log` with the git revision.
+
+## Deviations from the v3.0 spec (decided before the test run)
+
+* **Water level**: FFWC gauges and GloFAS could not be reached from the build
+  environment; a radar-derived stage proxy (open water inside the braid belt)
+  is used instead. Loaders for FFWC/GloFAS CSVs exist for later use.
+* **Ingestion**: Sentinel-1 GRD read from the public AWS archive instead of
+  Earth Engine (no EE credentials in the build environment). The EE scripts in
+  `gee/` implement the same method but produced none of the results.
+* **Coherence** and the **neural-operator surrogate** were not built; the
+  ledger says so instead of reporting a number.
+
+## Changes after the first test run
+
+None yet.

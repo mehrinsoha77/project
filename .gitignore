@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+*.egg-info/
+.ipynb_checkpoints/
+
+# Node / Next.js
+node_modules/
+app/.next/
+app/out/
+app/tsconfig.tsbuildinfo
+app/next-env.d.ts.bak
+
+# Environment
+.env
+.env.local
+app/.env.local
+
+# Large or regenerable data (see data/README.md)
+data/raw/
+data/processed/water_masks/*.tif
+data/processed/water_masks/*.json
+data/processed/water_masks/*.tmp.tif
+data/processed/metrics/mask_pairs/
+data/processed/alerts/
+data/processed/models/test_predictions.parquet
+*.tmp.tif
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
