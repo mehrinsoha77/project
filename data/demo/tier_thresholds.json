@@ -1,0 +1,6 @@
+{
+  "watch_top_k": 20,
+  "warning_min_prob": 0.379,
+  "warning_min_last_retreat_m": 40.0,
+  "source": "calibration year 2022: lowest probability with >= 50% precision above it"
+}

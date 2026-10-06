@@ -1,0 +1,270 @@
+{
+  "full": {
+    "n_features": 23,
+    "val_2022": {
+      "precision_at_k": 0.4,
+      "precision_at_k_monsoon": 0.15416666666666667,
+      "n_dates": 28,
+      "n_dates_monsoon": 12,
+      "pr_auc": 0.4774781371058469,
+      "major": {
+        "hits": 176,
+        "total": 753,
+        "recall": 0.2337317397078353
+      },
+      "brier": 0.04089210916929804,
+      "delta_precision_at_k_vs_full": 0.0,
+      "delta_pr_auc_vs_full": 0.0
+    },
+    "test_2023_2025": {
+      "precision_at_k": 0.4230769230769231,
+      "precision_at_k_monsoon": 0.3517241379310346,
+      "n_dates": 65,
+      "n_dates_monsoon": 29,
+      "pr_auc": 0.37797462771871754,
+      "major": {
+        "hits": 389,
+        "total": 1346,
+        "recall": 0.2890044576523031
+      },
+      "brier": 0.04141733808416949,
+      "delta_precision_at_k_vs_full": 0.0,
+      "delta_pr_auc_vs_full": 0.0
+    }
+  },
+  "-recent_retreat": {
+    "n_features": 19,
+    "val_2022": {
+      "precision_at_k": 0.33928571428571436,
+      "precision_at_k_monsoon": 0.125,
+      "n_dates": 28,
+      "n_dates_monsoon": 12,
+      "pr_auc": 0.386091775273442,
+      "major": {
+        "hits": 140,
+        "total": 753,
+        "recall": 0.18592297476759628
+      },
+      "brier": 0.04407494530261548,
+      "delta_precision_at_k_vs_full": -0.060714285714285665,
+      "delta_pr_auc_vs_full": -0.0913863618324049
+    },
+    "test_2023_2025": {
+      "precision_at_k": 0.37692307692307686,
+      "precision_at_k_monsoon": 0.2741379310344828,
+      "n_dates": 65,
+      "n_dates_monsoon": 29,
+      "pr_auc": 0.3352142773673573,
+      "major": {
+        "hits": 364,
+        "total": 1346,
+        "recall": 0.2704309063893016
+      },
+      "brier": 0.043112912621710124,
+      "delta_precision_at_k_vs_full": -0.04615384615384621,
+      "delta_pr_auc_vs_full": -0.04276035035136022
+    }
+  },
+  "-history": {
+    "n_features": 21,
+    "val_2022": {
+      "precision_at_k": 0.3964285714285714,
+      "precision_at_k_monsoon": 0.15833333333333333,
+      "n_dates": 28,
+      "n_dates_monsoon": 12,
+      "pr_auc": 0.4363621104276478,
+      "major": {
+        "hits": 167,
+        "total": 753,
+        "recall": 0.22177954847277556
+      },
+      "brier": 0.04273634089403516,
+      "delta_precision_at_k_vs_full": -0.0035714285714286143,
+      "delta_pr_auc_vs_full": -0.041116026678199136
+    },
+    "test_2023_2025": {
+      "precision_at_k": 0.4084615384615385,
+      "precision_at_k_monsoon": 0.33620689655172414,
+      "n_dates": 65,
+      "n_dates_monsoon": 29,
+      "pr_auc": 0.35780679821300326,
+      "major": {
+        "hits": 375,
+        "total": 1346,
+        "recall": 0.2786032689450223
+      },
+      "brier": 0.04177998631015783,
+      "delta_precision_at_k_vs_full": -0.014615384615384586,
+      "delta_pr_auc_vs_full": -0.020167829505714274
+    }
+  },
+  "-channel_geometry": {
+    "n_features": 16,
+    "val_2022": {
+      "precision_at_k": 0.3767857142857142,
+      "precision_at_k_monsoon": 0.14166666666666666,
+      "n_dates": 28,
+      "n_dates_monsoon": 12,
+      "pr_auc": 0.449807847286968,
+      "major": {
+        "hits": 160,
+        "total": 753,
+        "recall": 0.21248339973439576
+      },
+      "brier": 0.04211528105836458,
+      "delta_precision_at_k_vs_full": -0.0232142857142858,
+      "delta_pr_auc_vs_full": -0.027670289818878924
+    },
+    "test_2023_2025": {
+      "precision_at_k": 0.43230769230769234,
+      "precision_at_k_monsoon": 0.3448275862068966,
+      "n_dates": 65,
+      "n_dates_monsoon": 29,
+      "pr_auc": 0.3636731154733288,
+      "major": {
+        "hits": 385,
+        "total": 1346,
+        "recall": 0.28603268945022287
+      },
+      "brier": 0.041936498985329355,
+      "delta_precision_at_k_vs_full": 0.009230769230769265,
+      "delta_pr_auc_vs_full": -0.014301512245388726
+    }
+  },
+  "-water_level": {
+    "n_features": 18,
+    "val_2022": {
+      "precision_at_k": 0.36071428571428565,
+      "precision_at_k_monsoon": 0.12500000000000003,
+      "n_dates": 28,
+      "n_dates_monsoon": 12,
+      "pr_auc": 0.4055900091544698,
+      "major": {
+        "hits": 156,
+        "total": 753,
+        "recall": 0.20717131474103587
+      },
+      "brier": 0.04365003584714101,
+      "delta_precision_at_k_vs_full": -0.03928571428571437,
+      "delta_pr_auc_vs_full": -0.07188812795137711
+    },
+    "test_2023_2025": {
+      "precision_at_k": 0.3907692307692308,
+      "precision_at_k_monsoon": 0.32413793103448285,
+      "n_dates": 65,
+      "n_dates_monsoon": 29,
+      "pr_auc": 0.3436513582172769,
+      "major": {
+        "hits": 360,
+        "total": 1346,
+        "recall": 0.2674591381872214
+      },
+      "brier": 0.04295792089614269,
+      "delta_precision_at_k_vs_full": -0.03230769230769226,
+      "delta_pr_auc_vs_full": -0.034323269501440656
+    }
+  },
+  "-season": {
+    "n_features": 21,
+    "val_2022": {
+      "precision_at_k": 0.39285714285714285,
+      "precision_at_k_monsoon": 0.15833333333333333,
+      "n_dates": 28,
+      "n_dates_monsoon": 12,
+      "pr_auc": 0.4678482622055953,
+      "major": {
+        "hits": 169,
+        "total": 753,
+        "recall": 0.2244355909694555
+      },
+      "brier": 0.04153764428689039,
+      "delta_precision_at_k_vs_full": -0.007142857142857173,
+      "delta_pr_auc_vs_full": -0.009629874900251634
+    },
+    "test_2023_2025": {
+      "precision_at_k": 0.4192307692307692,
+      "precision_at_k_monsoon": 0.33448275862068966,
+      "n_dates": 65,
+      "n_dates_monsoon": 29,
+      "pr_auc": 0.33007375337349915,
+      "major": {
+        "hits": 394,
+        "total": 1346,
+        "recall": 0.29271916790490343
+      },
+      "brier": 0.04288058291030771,
+      "delta_precision_at_k_vs_full": -0.003846153846153888,
+      "delta_pr_auc_vs_full": -0.04790087434521839
+    }
+  },
+  "-neighbours": {
+    "n_features": 21,
+    "val_2022": {
+      "precision_at_k": 0.38750000000000007,
+      "precision_at_k_monsoon": 0.15833333333333335,
+      "n_dates": 28,
+      "n_dates_monsoon": 12,
+      "pr_auc": 0.4366489857010576,
+      "major": {
+        "hits": 167,
+        "total": 753,
+        "recall": 0.22177954847277556
+      },
+      "brier": 0.04212932228339716,
+      "delta_precision_at_k_vs_full": -0.012499999999999956,
+      "delta_pr_auc_vs_full": -0.04082915140478932
+    },
+    "test_2023_2025": {
+      "precision_at_k": 0.4207692307692308,
+      "precision_at_k_monsoon": 0.3482758620689655,
+      "n_dates": 65,
+      "n_dates_monsoon": 29,
+      "pr_auc": 0.3831303748936124,
+      "major": {
+        "hits": 378,
+        "total": 1346,
+        "recall": 0.28083209509658247
+      },
+      "brier": 0.0412284447264709,
+      "delta_precision_at_k_vs_full": -0.0023076923076922884,
+      "delta_pr_auc_vs_full": 0.005155747174894865
+    }
+  },
+  "-bank_height": {
+    "n_features": 22,
+    "val_2022": {
+      "precision_at_k": 0.3964285714285714,
+      "precision_at_k_monsoon": 0.17083333333333336,
+      "n_dates": 28,
+      "n_dates_monsoon": 12,
+      "pr_auc": 0.4755477977838185,
+      "major": {
+        "hits": 171,
+        "total": 753,
+        "recall": 0.22709163346613545
+      },
+      "brier": 0.040915712925681136,
+      "delta_precision_at_k_vs_full": -0.0035714285714286143,
+      "delta_pr_auc_vs_full": -0.001930339322028407
+    },
+    "test_2023_2025": {
+      "precision_at_k": 0.4184615384615385,
+      "precision_at_k_monsoon": 0.33620689655172414,
+      "n_dates": 65,
+      "n_dates_monsoon": 29,
+      "pr_auc": 0.3806421536662092,
+      "major": {
+        "hits": 368,
+        "total": 1346,
+        "recall": 0.27340267459138184
+      },
+      "brier": 0.041334364128526584,
+      "delta_precision_at_k_vs_full": -0.004615384615384577,
+      "delta_pr_auc_vs_full": 0.0026675259474916446
+    }
+  },
+  "_not_built": {
+    "coherence": "Sentinel-1 coherence needs SLC interferometric processing; not built in this run.",
+    "surrogate_velocity": "Neural-operator surrogate (optional research track) not built."
+  }
+}

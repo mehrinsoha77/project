@@ -247,7 +247,7 @@ def render_radar_png(pass_id: str, out: Path) -> tuple[list[float], tuple[int, i
     rgba[..., 0] = rgba[..., 1] = rgba[..., 2] = v.astype(np.uint8)
     rgba[..., 3] = np.where(dst == 255, 0, 255)
     out.parent.mkdir(parents=True, exist_ok=True)
-    Image.fromarray(rgba, "RGBA").save(out, "WEBP", quality=62, method=6)
+    Image.fromarray(rgba, "RGBA").save(out, "WEBP", quality=40, alpha_quality=30, method=6)
     from pyproj import Transformer
     t = Transformer.from_crs(dst_crs, "EPSG:4326", always_xy=True)
     x0, y1 = tr.c, tr.f

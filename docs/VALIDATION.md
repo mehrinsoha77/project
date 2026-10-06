@@ -139,4 +139,11 @@ All decided on training-period data (2015–2017 bank positions and
 
 ## Changes after the first test run
 
-None yet.
+The test years were scored once (`data/processed/metrics/test_runs.log`).
+Nothing that affects the model, labels or metrics changed afterwards. Added
+afterwards, as reporting only:
+
+* a sensitivity analysis excluding positives with retreat > 300 m or > 500 m
+  (`metrics/sensitivity_large_events.json`): the model still beats
+  persistence (+26.6 pts, 95% CI +19.8 to +34.6 at 300 m);
+* export fixes (PDF brief path, smaller radar previews) — presentation only.

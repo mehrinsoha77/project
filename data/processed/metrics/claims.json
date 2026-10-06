@@ -1,0 +1,68 @@
+[
+  {
+    "claim": "Radar bank lines match Sentinel-2 within a median of 20 m",
+    "status": "Measured",
+    "value": "median 20 m, 90th pct 499 m over 7912 transect comparisons in 16 S1/S2 pairs (≤2 days apart, independent of the geolocation fit); IoU median 0.71 vs optical active channel, 0.38 vs open water only",
+    "how": "Comparison against cloud-free Sentinel-2 L2A (MNDWI) scenes of tile 45RYH"
+  },
+  {
+    "claim": "Detection runs on every pass from 2015 to 2025 for the chosen reach",
+    "status": "Measured",
+    "value": "271 of 271 track-150 passes in the archive processed",
+    "how": "Count of passes processed versus passes available in the public Sentinel-1 archive"
+  },
+  {
+    "claim": "Model beats persistence on precision@20 for 2023–2025",
+    "status": "Measured",
+    "value": "P@20 42.3% vs 4.1%; difference +38.2 pts (95% CI +30.6 to +46.7), 65 forecast dates",
+    "how": "Temporal hold-out, moving-block bootstrap over forecast dates"
+  },
+  {
+    "claim": "Model beats persistence on the downstream half of the reach",
+    "status": "Measured",
+    "value": "P@20 36.1% vs 4.8%; difference +31.2 pts (95% CI +23.8 to +39.8)",
+    "how": "Spatial hold-out: trained upstream half, tested downstream half, 2023–2025"
+  },
+  {
+    "claim": "Risk probabilities are calibrated",
+    "status": "Measured",
+    "value": "Brier 0.0414 vs persistence 0.0517; expected calibration error 0.013",
+    "how": "Brier score and reliability diagram on test years (target: ECE ≤ 0.05 and Brier below persistence)"
+  },
+  {
+    "claim": "Time from a pass becoming available to an updated map",
+    "status": "Measured",
+    "value": "processing median 112 s per pass on 5 recent passes (4 vCPU, Linux x86_64, Python 3.13.16); archive latency (sensing → on AWS) median 2.9 h",
+    "how": "Timed end-to-end runs (download → mask → banks → features → ranked list)"
+  },
+  {
+    "claim": "Radar coherence adds predictive value",
+    "status": "Not built",
+    "how": "Needs SLC interferometric processing; not built in this run, so no claim is made"
+  },
+  {
+    "claim": "24-hour collapse forecast",
+    "status": "Dropped",
+    "how": "Not supported by the 6–12 day revisit"
+  },
+  {
+    "claim": "Sub-meter risk maps",
+    "status": "Dropped",
+    "how": "Not supported by 10 m pixels"
+  },
+  {
+    "claim": "Bed shear stress and pore pressure from satellite",
+    "status": "Dropped",
+    "how": "No bathymetry and no ground truth"
+  },
+  {
+    "claim": "Zero-shot use on any river on Earth",
+    "status": "Dropped",
+    "how": "Each river needs its own retraining and test"
+  },
+  {
+    "claim": "92.4% precision on 1,500 events, 1.42 s, 1.2 GB VRAM",
+    "status": "Dropped",
+    "how": "Never measured"
+  }
+]

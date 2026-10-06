@@ -1,0 +1,94 @@
+[
+  {
+    "feature": "doy_sin",
+    "mean_abs_shap": 0.3305792231968792
+  },
+  {
+    "feature": "doy_cos",
+    "mean_abs_shap": 0.32897115973655944
+  },
+  {
+    "feature": "raw_last_change_m",
+    "mean_abs_shap": 0.3232050617041415
+  },
+  {
+    "feature": "bank_height_m",
+    "mean_abs_shap": 0.3126366038520432
+  },
+  {
+    "feature": "inundation_m",
+    "mean_abs_shap": 0.2631718403778495
+  },
+  {
+    "feature": "ret_84_m",
+    "mean_abs_shap": 0.23677478918966594
+  },
+  {
+    "feature": "embayment_m",
+    "mean_abs_shap": 0.21267015260787933
+  },
+  {
+    "feature": "ret_365_m",
+    "mean_abs_shap": 0.20369409279005665
+  },
+  {
+    "feature": "stage_km2",
+    "mean_abs_shap": 0.19846083064801262
+  },
+  {
+    "feature": "ret_56_m",
+    "mean_abs_shap": 0.1627855138050704
+  },
+  {
+    "feature": "n_obs_365",
+    "mean_abs_shap": 0.1541632998746788
+  },
+  {
+    "feature": "nb_ret_365_m",
+    "mean_abs_shap": 0.13366537785710378
+  },
+  {
+    "feature": "baseline_curvature",
+    "mean_abs_shap": 0.06993232806642577
+  },
+  {
+    "feature": "ret_28_m",
+    "mean_abs_shap": 0.06640070505456658
+  },
+  {
+    "feature": "stage_change_24d",
+    "mean_abs_shap": 0.0524938153829855
+  },
+  {
+    "feature": "dist_main_channel_m",
+    "mean_abs_shap": 0.04787445267641999
+  },
+  {
+    "feature": "stage_change_12d",
+    "mean_abs_shap": 0.046122987762597004
+  },
+  {
+    "feature": "near_channel_width_m",
+    "mean_abs_shap": 0.045915229520581156
+  },
+  {
+    "feature": "nb_ret_84_m",
+    "mean_abs_shap": 0.039084671073549515
+  },
+  {
+    "feature": "stage_anom_km2",
+    "mean_abs_shap": 0.032487703992656956
+  },
+  {
+    "feature": "d_dist_main_28_m",
+    "mean_abs_shap": 0.028992999282843563
+  },
+  {
+    "feature": "char_shield_frac",
+    "mean_abs_shap": 0.020714027269706295
+  },
+  {
+    "feature": "nearbank_water_frac",
+    "mean_abs_shap": 0.015907584256760733
+  }
+]

@@ -19,7 +19,8 @@ affects and what would fix it.
 | Limitation | Effect |
 |---|---|
 | Labels come from the **same radar masks** as the features. | Systematic mask errors (e.g. wet sand, flooded fields joined to the river) can enter both. Forward confirmation (36 days) removes transient errors but not persistent ones. |
-| Threshold = max(20 m, 2 × measured median bank error). | Retreats smaller than the threshold are invisible to the model. |
+| **Very large moves.** A third of test-year positives exceed 300 m in 28 days — more than typical mainland bank retreat. Many are a side channel opening right beside the mainland (the bank facing open water jumps landward) or a char detaching. They persisted six months, so they count, but they are not all "land eaten by the river". | Reported separately: excluding them, model 29.6% vs persistence 3.0% precision@20 (`metrics/sensitivity_large_events.json`). |
+| Threshold = max(20 m, 2 × measured median bank error) = 40 m. | Retreats smaller than the threshold are invisible to the model. |
 | No ground truth from the field. | We measure agreement with the satellite record, not with households' experience. A pilot with ground reports is the next step. |
 
 ## Model

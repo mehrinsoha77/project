@@ -70,7 +70,7 @@ def build_brief(pred: pd.DataFrame, date: str, out: Path | io.BytesIO) -> None:
     ss = getSampleStyleSheet()
     small = ParagraphStyle("small", parent=ss["Normal"], fontSize=7, leading=8.5)
     tiny = ParagraphStyle("tiny", parent=ss["Normal"], fontSize=6.5, leading=8, textColor=colors.HexColor("#52514e"))
-    doc = SimpleDocTemplate(out, pagesize=A4, leftMargin=12 * mm, rightMargin=12 * mm,
+    doc = SimpleDocTemplate(str(out) if isinstance(out, Path) else out, pagesize=A4, leftMargin=12 * mm, rightMargin=12 * mm,
                             topMargin=10 * mm, bottomMargin=10 * mm,
                             title=f"NadiNet risk brief {date}", author="NadiNet")
     story = [

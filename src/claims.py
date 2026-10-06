@@ -42,7 +42,8 @@ def ledger() -> list[dict]:
                         status="Measured" if ok else "Not met",
                         value=(f"median {mv['bank_error_median_m']:.0f} m, 90th pct {mv['bank_error_p90_m']:.0f} m over "
                                f"{mv['n_transect_comparisons']} transect comparisons in {mv['n_pairs']} S1/S2 pairs "
-                               f"(≤{mv['max_days_apart']} days apart); water IoU median {mv['iou_median']:.2f}"),
+                               f"(≤{mv['max_days_apart']} days apart, independent of the geolocation fit); IoU median "
+                               f"{mv['iou_median']:.2f} vs optical active channel, {mv.get('iou_water_median', float('nan')):.2f} vs open water only"),
                         how="Comparison against cloud-free Sentinel-2 L2A (MNDWI) scenes of tile 45RYH"))
     else:
         out.append(dict(claim="Radar bank lines match Sentinel-2 within a median of 20 m", status="Target",

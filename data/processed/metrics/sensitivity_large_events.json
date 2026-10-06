@@ -1,0 +1,31 @@
+{
+  "share_positives_over_300m": 0.3308181096108022,
+  "share_positives_over_500m": 0.2414614773629865,
+  "median_positive_retreat_m": 110.0,
+  "exclude_positive_retreat_over_300m": {
+    "M1": 0.2961538461538461,
+    "B0": 0.03,
+    "diff": {
+      "mean": 0.2661538461538462,
+      "lo": 0.19846153846153847,
+      "hi": 0.34615384615384615,
+      "n_dates": 65,
+      "block": 3,
+      "n_boot": 4000
+    },
+    "positive_rate": 0.037199752737548566
+  },
+  "exclude_positive_retreat_over_500m": {
+    "M1": 0.32769230769230767,
+    "B0": 0.03307692307692307,
+    "diff": {
+      "mean": 0.29461538461538467,
+      "lo": 0.2246153846153846,
+      "hi": 0.37538461538461537,
+      "n_dates": 65,
+      "block": 3,
+      "n_boot": 4000
+    },
+    "positive_rate": 0.041958656444278465
+  }
+}
