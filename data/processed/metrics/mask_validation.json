@@ -1,0 +1,38 @@
+{
+  "n_pairs": 16,
+  "s2_tile": "45RYH",
+  "max_days_apart": 2,
+  "max_cloud_pct": 5.0,
+  "independent_of_offset_fit": true,
+  "excluded_offset_fit_passes": [
+    "20170225_S1A",
+    "20171104_S1A",
+    "20180220_S1A",
+    "20180409_S1A",
+    "20181111_S1A",
+    "20190110_S1A",
+    "20190203_S1A",
+    "20191106_S1A"
+  ],
+  "years": [
+    "2018",
+    "2019",
+    "2020",
+    "2021",
+    "2022",
+    "2023",
+    "2024",
+    "2025"
+  ],
+  "reference": "active channel = MNDWI > 0 or NDVI < 0.15 (water + bare sand)",
+  "iou_median": 0.7054975126290977,
+  "iou_min": 0.5887248615314571,
+  "iou_max": 0.7635128931261449,
+  "iou_water_median": 0.38266298509700625,
+  "bank_error_median_m": 20.0,
+  "bank_error_p90_m": 499.00000000000546,
+  "bank_error_mean_signed_m": 94.95197168857432,
+  "n_transect_comparisons": 7912,
+  "label_threshold_m": 40.0,
+  "generated": "2026-10-06T09:52:21+00:00"
+}

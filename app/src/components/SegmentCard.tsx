@@ -121,8 +121,8 @@ export function SegmentCard({ id, reach, pred, forecastDate, revealed = true, on
       {outcome && pred && (
         <div className={cn("mx-3 mb-2 rounded-md px-2.5 py-1.5 text-xs", pred.y ? "bg-[#0ca30c]/10" : "bg-muted")}>
           <span className="font-medium">What happened by {pred.target ? fmtDate(pred.target) : "the next pass"}:</span>{" "}
-          {pred.retreat !== null ? `bank moved ${signedMetres(pred.retreat)} (confirmed)` : "not observed"}
-          {pred.y ? " — lost land beyond the threshold." : " — below the threshold."}
+          {pred.retreat !== null ? `bank moved ${signedMetres(pred.retreat)} landward (smaller of the 28-day move and what remained six months later)` : "not observed"}
+          {pred.y ? " — permanent land loss beyond the threshold." : " — below the threshold."}
           {pred.major ? <Badge className="ml-1" variant="notmet">major event ≥100 m</Badge> : null}
         </div>
       )}

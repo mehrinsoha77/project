@@ -1,0 +1,25 @@
+{
+  "threshold_m": 40.0,
+  "permanence_days": 180,
+  "permanence_quantile": 25,
+  "start_window_days": 24,
+  "target_half_window_days": 12,
+  "train": {
+    "rows": 116447,
+    "forecast_dates": 158,
+    "positive_rate": 0.06482777572629608,
+    "major_events": 3979
+  },
+  "val": {
+    "rows": 21798,
+    "forecast_dates": 28,
+    "positive_rate": 0.060601890081658866,
+    "major_events": 753
+  },
+  "test": {
+    "rows": 46129,
+    "forecast_dates": 65,
+    "positive_rate": 0.054586052158078435,
+    "major_events": 1346
+  }
+}

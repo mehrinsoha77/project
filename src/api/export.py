@@ -325,7 +325,8 @@ def _render_to_mercator(arrays: list[np.ndarray], src_transform, src_crs, nodata
     return np.stack(out), [s_, w_, n_, e_]
 
 
-def export_wow(out: Path = APP_DATA, years=(2023, 2024, 2025), min_cloud: float = 80.0) -> dict | None:
+def export_wow(out: Path = APP_DATA, years=(2023, 2024, 2025), min_cloud: float = 85.0,
+               max_cloud: float = 99.0) -> dict | None:
     """The monsoon blind spot: a real cloudy Sentinel-2 scene and the radar pass of the same week."""
     from src.masks.validate_masks import S2_BUCKET, item_meta, list_s2_items
     passes = pd.read_csv(config.MASK_DIR / "mask_summary.csv")
@@ -335,7 +336,8 @@ def export_wow(out: Path = APP_DATA, years=(2023, 2024, 2025), min_cloud: float 
         for mth in (6, 7, 8, 9):
             for pref in list_s2_items("45/R/YH", y, mth):
                 meta = item_meta(pref)
-                if not meta or meta["cloud"] < min_cloud or meta["nodata"] > 20:
+                # heavy but not total cloud: a flat 100% scene reads as a missing image, not as cloud
+                if not meta or not (min_cloud <= meta["cloud"] <= max_cloud) or meta["nodata"] > 20:
                     continue
                 d = pd.Timestamp(meta["datetime"][:10])
                 gap = (passes["d"] - d).abs().dt.days

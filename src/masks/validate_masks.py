@@ -175,8 +175,16 @@ def compare(s1: np.ndarray, s2_water: np.ndarray, s2_channel: np.ndarray, rows, 
                 _diff=diff)
 
 
+def calibration_pairs() -> set[str]:
+    """Passes used to fit the geolocation offset; excluded from the headline statistics."""
+    p = config.METRICS_DIR / "geolocation_offset.json"
+    return set(json.loads(p.read_text())["pairs"]) if p.exists() else set()
+
+
 def run(max_pairs: int = 16) -> dict:
     summary = pd.read_csv(config.MASK_DIR / "mask_summary.csv")
+    used = calibration_pairs()
+    summary = summary[~summary["pass_id"].isin(used)]          # independent pairs only
     pairs = find_pairs(summary, max_pairs)
     log.info("%d S1/S2 pairs", len(pairs))
     tr = load_transects()
@@ -201,6 +209,8 @@ def run(max_pairs: int = 16) -> dict:
     med = float(np.median(np.abs(all_d)))
     res = dict(
         n_pairs=int(len(df)), s2_tile="45RYH", max_days_apart=MAX_DAYS, max_cloud_pct=MAX_CLOUD,
+        independent_of_offset_fit=True, excluded_offset_fit_passes=sorted(used),
+        years=sorted({str(x)[:4] for x in df["s1_date"]}),
         reference="active channel = MNDWI > 0 or NDVI < 0.15 (water + bare sand)",
         iou_median=float(df["iou_active_channel"].median()), iou_min=float(df["iou_active_channel"].min()),
         iou_max=float(df["iou_active_channel"].max()),
